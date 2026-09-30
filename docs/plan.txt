@@ -1,0 +1,62 @@
+| phase| Focus                                     |
+| ---- | ----------------------------------------- |
+| 1    | Transformer + attention + KV cache        | -> part of inference
+| 2    | Build tensor + basic operators            |
+| 3    | Llama-style model forward pass            |
+| 4    | Token generation + sampling               |
+| 5    | Model loading + tokenizer                 |
+| 6    | C++ HTTP inference server                 |
+| 7    | Request manager + worker model            |
+| 8    | Continuous batching                       |
+| 9    | Prefill/decode scheduling                 |
+| 10   | Paged KV cache                            |
+| 11   | Benchmarking + profiling                  |
+| 12   | Optimization + architecture documentation |
+
+
+phase-1 :
+mini_infer
+   │
+   ├── tokenizer
+   ├── model loader
+   ├── tensor
+   ├── transformer
+   ├── attention
+   ├── kv_cache
+   └── sampler
+with one model to support like llama
+
+phase-2 :
+load model into the inference
+
+phase-3 :
+building serving layer
+Boost.Asio
+    +
+C++ threads
+    +
+thread-safe queues
+    +
+HTTP
+
+phase-4 : 
+add request management
+
+Request
+  │
+  ├── request_id
+  ├── prompt_tokens
+  ├── generated_tokens
+  ├── max_tokens
+  ├── temperature
+  ├── state
+  └── KV-cache allocation
+
+states -
+QUEUED
+  ↓
+PREFILL
+  ↓
+DECODING
+  ↓
+FINISHED

@@ -1,0 +1,65 @@
+# CMake / Ninja / MSVC build trees
+build/
+cmake-build-*/
+out/
+
+# Generated under source tree (e.g. --benchmark_out)
+benchmarks/results/
+bench_ops.json
+bench_ops.csv
+
+# Visual Studio
+.vs/
+*.vcxproj.user
+*.vcxproj.filters.user
+*.sln.docstates
+*.user
+*.suo
+*.ncb
+*.sdf
+*.opensdf
+*.VC.db
+*.VC.VC.opendb
+ipch/
+
+# Build artifacts (if ever emitted outside build/)
+*.obj
+*.o
+*.ilk
+*.pdb
+*.idb
+*.exp
+*.lib
+*.dll
+*.exe
+*.pch
+
+# compile_commands (optional copy/symlink at repo root)
+compile_commands.json
+
+# JetBrains / VS Code local settings
+.idea/
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Python (scripts/compare_llama_cpp.py, etc.)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Editor backups
+*~
+*.swp
+*.swo
+
+# Cursor debug session logs
+debug-*.log
+.cursor/
