@@ -7,7 +7,8 @@ The table in [plan.txt](plan.txt) lists 12 focus areas; rows **1 and 2 are rever
 | New phase | Original `plan.txt` row | Runnable output after phase |
 |-----------|-------------------------|-----------------------------|
 | 1 | 2 — Tensor + basic operators | `bench_ops`, micro GTests pass |
-| 2 | 1 — Transformer + attention + KV | `bench_attention`, one-layer forward |
+| 2a | 1 — Transformer + attention (no KV) | `bench_attention` prefill, block forward tests |
+| 2b | 1 — KV cache + decode benchmarks | `bench_attention` naive vs KV decode |
 | 3 | 3 — Llama-style forward | `bench_forward`, multi-layer random weights |
 | 4 | 4 — Token generation + sampling | **`mini_infer` CLI** (synthetic weights): greedy decode |
 | 5 | 5 — Model loading + tokenizer | **`mini_infer` on real GGUF**; logits parity vs llama.cpp |
@@ -101,24 +102,47 @@ serving_layer/
 
 ---
 
-## Phase 2 — Transformer block + attention + KV cache (orig. row 1)
+## Phase 2a — Transformer block + attention (**no** KV cache) (orig. row 1, part A)
 
-**Goal:** One correct **Llama-shaped block** (pre-norm, residual, GQA attention, SwiGLU FFN) with **KV cache** for decode.
+**Implementation guide:** [phase2-implementation.md](phase2-implementation.md) (Part A)
+
+**Goal:** One correct **Llama-shaped block** (pre-norm, residual, **GQA** attention, **SwiGLU** FFN) on **full-sequence** forwards only.
 
 **Implement:**
 
-- **RoPE** (freqs from head_dim / config)
-- **GQA:** Q/K/V projections, repeat K/V heads, scaled dot-product, causal mask
-- **KVCache:** append step for `(batch, seq, kv_heads, head_dim)`; read full history for attention
-- `TransformerBlock`: attn → residual → FFN (gate/up/down) → residual
+- **RoPE** on Q/K (freqs from `head_dim` / `rope_theta`)
+- **GQA:** Q/K/V projections, repeat K/V heads, scaled dot-product, **causal** mask
+- `linear` helper for projections
+- `TransformerBlock::forward(x, positions)` — **no** `KVCache`
 
-**Deliverables:** `bench_attention`; test harness `tests/test_one_block_forward.cpp`.
+**Deliverables:** `bench_attention` (prefill suites); `tests/test_attention.cpp`, `tests/test_one_block_forward.cpp`.
 
-**GTests:** attention scores vs naive reference on `seq=4, heads=2`; KV cache: two forward steps equal one joint prefill for same tokens.
+**GTests:** attention vs naive reference (`seq=4`, small heads); block forward shapes + determinism.
 
-**Benchmarks:** single-layer prefill tokens/s for seq 128/512 (random weights).
+**Benchmarks:** single-layer **prefill** tokens/s for seq **128** / **512** (random weights).
+
+**Gate:** no `src/cache/` yet; no incremental decode API.
 
 ---
+
+## Phase 2b — KV cache + decode benchmarks (orig. row 1, part B)
+
+**Goal:** Same block with **KVCache** so decode does not recompute past K/V; benchmarks show **why** caching matters.
+
+**Implement:**
+
+- `KVCache` — append `(batch, 1, kv_heads, head_dim)` per step; attention reads full history
+- `TransformerBlock` prefill + `decode_step` (or `forward` with cache)
+- **Naive decode baseline** (re-forward growing sequence) for comparison only
+
+**Deliverables:** extend `bench_attention` with `DecodeNaive` vs `DecodeKV` suites; `tests/test_kv_cache.cpp`.
+
+**GTests:** two decode steps **==** one joint prefill (same logits at last position).
+
+**Benchmarks:** paired naive vs KV decode over `T` tokens; document tokens/s vs context length.
+
+---
+
 
 ## Phase 3 — Llama-style full model forward (orig. row 3)
 

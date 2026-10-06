@@ -135,4 +135,29 @@ void embedding(const Tensor& weight, const vector<int32_t>& indices, Tensor& out
   }
 }
 
+// linear: void — computes out = x @ weight^T for x[M,K], weight[N,K], out[M,N].
+void linear(const Tensor& x, const Tensor& weight, Tensor& out) {
+  const auto& xs = x.shape();
+  const auto& ws = weight.shape();
+  if (xs.size() != 2 || ws.size() != 2) {
+    throw invalid_argument("linear expects rank-2");
+  }
+  int64_t M = xs[0], K = xs[1], N = ws[0], K2 = ws[1];
+  if (K != K2) {
+    throw invalid_argument("linear inner dim mismatch");
+  }
+  if (out.shape() != vector<int64_t>{M, N}) {
+    throw invalid_argument("linear out shape");
+  }
+  for (int64_t m = 0; m < M; ++m) {
+    for (int64_t n = 0; n < N; ++n) {
+      float sum = 0.f;
+      for (int64_t k = 0; k < K; ++k) {
+        sum += x.at({m, k}) * weight.at({n, k});
+      }
+      out.at({m, n}) = sum;
+    }
+  }
+}
+
 }  // namespace serving

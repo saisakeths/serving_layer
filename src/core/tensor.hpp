@@ -14,6 +14,10 @@ namespace serving {
 class Tensor {
  public:
   Tensor() = default;
+  Tensor(const Tensor&) = delete;
+  Tensor& operator=(const Tensor&) = delete;
+  Tensor(Tensor&&) = default;
+  Tensor& operator=(Tensor&&) = default;
   // Tensor: — constructs a tensor with the given shape and dtype (data uninitialized).
   Tensor(vector<int64_t> shape, DType dtype = DType::Float32);
 

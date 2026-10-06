@@ -23,5 +23,7 @@ void softmax_last_dim(const Tensor& x, Tensor& out);
 void silu_inplace(Tensor& x);
 // embedding: void — gathers rows from weight[vocab,dim] for indices into out.
 void embedding(const Tensor& weight, const vector<int32_t>& indices, Tensor& out);
+// linear: void — computes out = x @ weight^T for x[M,K], weight[N,K], out[M,N].
+void linear(const Tensor& x, const Tensor& weight, Tensor& out);
 
 }  // namespace serving
