@@ -6,6 +6,7 @@ add_library(serving_core
   ops/rope.cpp
   model/llama/attention.cpp
   model/llama/transformer_block.cpp
+  cache/kv_cache.cpp
 )
 
 target_include_directories(serving_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
