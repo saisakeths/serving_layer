@@ -47,8 +47,8 @@ class Tensor {
   // at: float — element at multi-dimensional indices.
   float at(initializer_list<int64_t> indices) const;
 
-  // view: Tensor — reshapes to new_shape when numel matches (copies for Phase 1).
-  Tensor view(vector<int64_t> new_shape) const;
+  // reshape: Tensor — reshapes to new_shape when numel matches (copies for Phase 1).
+  Tensor reshape(vector<int64_t> new_shape) const;
 
  private:
   // compute_strides: void — fills strides_ from shape_ for row-major layout.

@@ -6,6 +6,9 @@ add_library(serving_core
   ops/rope.cpp
   model/llama/attention.cpp
   model/llama/transformer_block.cpp
+  model/llama/llama_weights.cpp
+  model/llama/llama_cache.cpp
+  model/llama/llama_model.cpp
   cache/kv_cache.cpp
 )
 

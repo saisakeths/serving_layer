@@ -1,0 +1,12 @@
+﻿✓ Initialized. View run at 
+https://modal.com/apps/saisaketh4201/main/ap-PiBOrM1STCDeMfObCt5Lwo
+Stopping app - uncaught exception raised locally: ExecutionError('E:\\AI_Systems\\serving_layer\\modal-run.log was modified during build process.').
+.\.venv\Scripts\python.exe : ┌─ Error ──────────────────────────────────────────────────────────────────────┐
+At C:\Users\asus\AppData\Local\Temp\ps-script-4a2f581f-595e-46b5-b6e0-267adf2e84eb.ps1:89 char:141
++ ... thon.exe) { .\.venv\Scripts\python.exe -m modal run modal/main.py 2>& ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (┌─ Error ──────...──────────────┐:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+│ E:\AI_Systems\serving_layer\modal-run.log was modified during build process. │
+└──────────────────────────────────────────────────────────────────────────────┘

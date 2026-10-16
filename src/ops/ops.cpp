@@ -125,12 +125,12 @@ void embedding(const Tensor& weight, const vector<int32_t>& indices, Tensor& out
     throw invalid_argument("embedding out shape");
   }
   for (size_t i = 0; i < indices.size(); ++i) {
-    int32_t id = indices[i];
-    if (id < 0 || id >= vocab) {
+    int32_t weight_id = indices[i];
+    if (weight_id < 0 || weight_id >= vocab) {
       throw out_of_range("token id");
     }
     for (int64_t d = 0; d < dim; ++d) {
-      out.at({static_cast<int64_t>(i), d}) = weight.at({id, d});
+      out.at({static_cast<int64_t>(i), d}) = weight.at({weight_id, d});
     }
   }
 }

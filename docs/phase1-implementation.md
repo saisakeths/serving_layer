@@ -25,7 +25,7 @@ Adjust config path (`Release` vs `Debug`) for your generator.
 | `cmake/Dependencies.cmake` | FetchContent GTest 1.14, benchmark 1.8.3 |
 | `src/CMakeLists.txt` | Library `serving_core` |
 | `src/core/dtypes.hpp`, `dtypes.cpp` | `DType` enum, `dtype_size` |
-| `src/core/tensor.hpp`, `tensor.cpp` | Shape, strides, `zeros`, `from_vector`, `at`, `view` |
+| `src/core/tensor.hpp`, `tensor.cpp` | Shape, strides, `zeros`, `from_vector`, `at`, `reshape` |
 | `src/ops/ops.hpp`, `ops.cpp` | matmul, add/mul inplace, rmsnorm, softmax_last_dim, silu_inplace, embedding |
 | `tests/CMakeLists.txt` | `test_tensor`, `test_ops` |
 | `tests/test_tensor.cpp` | Shape, zeros, from_vector |

@@ -68,17 +68,17 @@ float Tensor::at(initializer_list<int64_t> indices) const {
   return data_[TensorIndex::linear_index(shape_, strides_, indices)];
 }
 
-// view: Tensor — reshapes to new_shape when numel matches (copies for Phase 1).
-Tensor Tensor::view(vector<int64_t> new_shape) const {
+// reshape: Tensor — reshapes to new_shape when numel matches (copies for Phase 1).
+Tensor Tensor::reshape(vector<int64_t> new_shape) const {
   int64_t new_numel = 1;
   for (int64_t d : new_shape) {
     new_numel *= d;
   }
   if (static_cast<size_t>(new_numel) != numel_) {
-    throw invalid_argument("view size mismatch");
+    throw invalid_argument("reshape size mismatch");
   }
   if (!contiguous_) {
-    throw runtime_error("view requires contiguous tensor");
+    throw runtime_error("reshape requires contiguous tensor");
   }
   Tensor out;
   out.shape_ = move(new_shape);

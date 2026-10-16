@@ -25,10 +25,10 @@ void TransformerBlock::forward(const Tensor& x, const vector<int64_t>& positions
   int64_t seq = xs[1];
   int64_t dim = xs[2];
 
-  Tensor x2d = x.view({batch * seq, dim});
+  Tensor x2d = x.reshape({batch * seq, dim});
   Tensor normed2d({batch * seq, dim});
   rmsnorm(x2d, weights_.attn_norm, config_.rms_eps, normed2d);
-  Tensor normed = normed2d.view({batch, seq, dim});
+  Tensor normed = normed2d.reshape({batch, seq, dim});
 
   Tensor attn_out({batch, seq, dim});
   gqa_attention(normed, weights_.attn, config_, positions, attn_out);
@@ -42,7 +42,7 @@ void TransformerBlock::forward(const Tensor& x, const vector<int64_t>& positions
     }
   }
 
-  Tensor res2d = residual1.view({batch * seq, dim});
+  Tensor res2d = residual1.reshape({batch * seq, dim});
   Tensor ffn_normed2d({batch * seq, dim});
   rmsnorm(res2d, weights_.ffn_norm, config_.rms_eps, ffn_normed2d);
   Tensor gate({batch * seq, config_.ffn_dim});
@@ -79,10 +79,10 @@ void TransformerBlock::forward_prefill(const Tensor& x, const vector<int64_t>& p
   int64_t seq = xs[1];
   int64_t dim = xs[2];
 
-  Tensor x2d = x.view({batch * seq, dim});
+  Tensor x2d = x.reshape({batch * seq, dim});
   Tensor normed2d({batch * seq, dim});
   rmsnorm(x2d, weights_.attn_norm, config_.rms_eps, normed2d);
-  Tensor normed = normed2d.view({batch, seq, dim});
+  Tensor normed = normed2d.reshape({batch, seq, dim});
 
   Tensor attn_out({batch, seq, dim});
   gqa_attention_prefill(normed, weights_.attn, config_, positions, cache, attn_out);
@@ -96,7 +96,7 @@ void TransformerBlock::forward_prefill(const Tensor& x, const vector<int64_t>& p
     }
   }
 
-  Tensor res2d = residual1.view({batch * seq, dim});
+  Tensor res2d = residual1.reshape({batch * seq, dim});
   Tensor ffn_normed2d({batch * seq, dim});
   rmsnorm(res2d, weights_.ffn_norm, config_.rms_eps, ffn_normed2d);
   Tensor gate({batch * seq, config_.ffn_dim});
@@ -132,10 +132,10 @@ void TransformerBlock::decode_step(const Tensor& x, int64_t position, KVCache& c
   int64_t seq = 1;
   int64_t dim = xs[2];
 
-  Tensor x2d = x.view({batch, dim});
+  Tensor x2d = x.reshape({batch, dim});
   Tensor normed2d({batch, dim});
   rmsnorm(x2d, weights_.attn_norm, config_.rms_eps, normed2d);
-  Tensor normed = normed2d.view({batch, seq, dim});
+  Tensor normed = normed2d.reshape({batch, seq, dim});
 
   Tensor attn_out({batch, seq, dim});
   gqa_attention_decode(normed, weights_.attn, config_, position, cache, attn_out);
@@ -147,7 +147,7 @@ void TransformerBlock::decode_step(const Tensor& x, int64_t position, KVCache& c
     }
   }
 
-  Tensor res2d = residual1.view({batch, dim});
+  Tensor res2d = residual1.reshape({batch, dim});
   Tensor ffn_normed2d({batch, dim});
   rmsnorm(res2d, weights_.ffn_norm, config_.rms_eps, ffn_normed2d);
   Tensor gate({batch, config_.ffn_dim});

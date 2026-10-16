@@ -91,7 +91,7 @@ serving_layer/
 **Implement:**
 
 - `Tensor`: shape, strides, `float` / `float16` storage (start `float`; add `f16` when GGUF dequant needs it)
-- Views, contiguous checks, simple CPU allocators
+- reshapes, contiguous checks, simple CPU allocators
 - Ops: `matmul`, elementwise add/mul, **RMSNorm**, **softmax** (stable), **SiLU**, embedding lookup
 
 **Deliverables:** library `serving_core`; binary `bench_ops`.
@@ -145,6 +145,8 @@ serving_layer/
 
 
 ## Phase 3 — Llama-style full model forward (orig. row 3)
+
+**Implementation guide:** [phase3-implementation.md](phase3-implementation.md) · **Phase 4 (cache + gen):** [phase4-implementation.md](phase4-implementation.md)
 
 **Goal:** Stack `n_layer` blocks + token embedding + output norm + **lm_head** logits.
 

@@ -13,13 +13,13 @@ namespace serving {
 
 namespace {
 
-// reshape_proj: Tensor — views linear output as [batch, seq, heads, head_dim].
+// reshape_proj: Tensor — reshapes linear output as [batch, seq, heads, head_dim].
 Tensor reshape_proj(const Tensor& flat, int64_t batch, int64_t seq, int64_t heads,
                     int64_t head_dim) {
   if (flat.shape() != vector<int64_t>{batch * seq, heads * head_dim}) {
     throw invalid_argument("proj flat shape");
   }
-  return flat.view({batch, seq, heads, head_dim});
+  return flat.reshape({batch, seq, heads, head_dim});
 }
 
 // attn_scores_row: float — dot product over head_dim for one query/key head vector.
@@ -118,7 +118,7 @@ void gqa_attention(const Tensor& x, const AttentionWeights& weights, const Block
   int64_t n_rep = config.n_heads / config.n_kv_heads;
   float safety_cap = 1.f / sqrtf(static_cast<float>(config.head_dim));
 
-  Tensor x2d = x.view({batch * seq, dim});
+  Tensor x2d = x.reshape({batch * seq, dim});
   Tensor q_flat({batch * seq, dim});
   Tensor k_flat({batch * seq, config.n_kv_heads * config.head_dim});
   Tensor v_flat({batch * seq, config.n_kv_heads * config.head_dim});
@@ -214,7 +214,7 @@ void gqa_attention_prefill(const Tensor& x, const AttentionWeights& weights,
   }
   float safety_cap = 1.f / sqrtf(static_cast<float>(config.head_dim));
 
-  Tensor x2d = x.view({batch * seq, dim});
+  Tensor x2d = x.reshape({batch * seq, dim});
   Tensor q_flat({batch * seq, dim});
   Tensor k_flat({batch * seq, config.n_kv_heads * config.head_dim});
   Tensor v_flat({batch * seq, config.n_kv_heads * config.head_dim});
@@ -260,7 +260,7 @@ void gqa_attention_decode(const Tensor& x, const AttentionWeights& weights,
   int64_t n_rep = config.n_heads / config.n_kv_heads;
   float scale = 1.f / sqrtf(static_cast<float>(config.head_dim));
 
-  Tensor x2d = x.view({batch, dim});
+  Tensor x2d = x.reshape({batch, dim});
   Tensor q_flat({batch, dim});
   Tensor k_flat({batch, config.n_kv_heads * config.head_dim});
   Tensor v_flat({batch, config.n_kv_heads * config.head_dim});
