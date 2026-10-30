@@ -18,6 +18,7 @@ struct LlamaConfig {
   float rope_theta = 10000.f;
   float rms_eps = 1e-5f;
   bool tie_word_embeddings = true;
+  int32_t eos_token_id = 0;
 
   // validate: void — throws if hyperparameters are inconsistent.
   void validate() const {
@@ -58,6 +59,7 @@ struct LlamaConfig {
     c.vocab_size = 32;
     c.rope_theta = 10000.f;
     c.tie_word_embeddings = true;
+    c.eos_token_id = 0;
     return c;
   }
 
@@ -73,6 +75,7 @@ struct LlamaConfig {
     c.vocab_size = 128256;
     c.rope_theta = 10000.f;
     c.tie_word_embeddings = true;
+    c.eos_token_id = 0;
     return c;
   }
 };

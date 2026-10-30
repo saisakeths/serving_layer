@@ -6,3 +6,6 @@ target_link_libraries(bench_attention PRIVATE serving_core benchmark::benchmark)
 
 add_executable(bench_forward bench_forward.cpp)
 target_link_libraries(bench_forward PRIVATE serving_core benchmark::benchmark)
+
+add_executable(bench_decode bench_decode.cpp)
+target_link_libraries(bench_decode PRIVATE serving_core benchmark::benchmark)

@@ -22,6 +22,9 @@ class LlamaCache {
   // max_seq: int64_t — sequence capacity of each layer cache.
   int64_t max_seq() const;
 
+  // reset: void — clears valid length on every layer cache.
+  void reset();
+
  private:
   std::vector<KVCache> layers_;
 };

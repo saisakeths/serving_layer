@@ -10,6 +10,8 @@ add_library(serving_core
   model/llama/llama_cache.cpp
   model/llama/llama_model.cpp
   cache/kv_cache.cpp
+  sampler/sampler.cpp
+  sampler/generation_loop.cpp
 )
 
 target_include_directories(serving_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

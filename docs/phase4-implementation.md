@@ -44,6 +44,13 @@ Extend Phase 3 `mini_infer` with `--prompt`, `--max-tokens`, and sampler flags.
 - `ctest` for sampler + generation on tiny config
 - `mini_infer --model synthetic` produces non-empty token sequence
 
+## Gate status
+
+- `LlamaCache::reset`, `LlamaModel::decode_step`, `forward_prefill` alias
+- `src/sampler/` (`Sampler`, `generate`), `src/io/synthetic_prompt.hpp`
+- `test_sampler`, `test_generation`, `bench_decode`, extended `mini_infer`
+- Cloud: `modal run modal/main.py --bench decode`
+
 ## After Phase 4
 
 Phase 5 — GGUF load + real Llama-3.2-1B Q4_K_M per [plan.md](plan.md).

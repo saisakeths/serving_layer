@@ -17,8 +17,18 @@ class LlamaModel {
   LlamaModel(LlamaConfig config, LlamaWeights weights);
 
   // forward: void — prefill with KV cache; logits shape [1, seq, vocab_size].
-  void forward(const std::vector<int32_t>& input_ids, const std::vector<int64_t>& positions,
-               LlamaCache& cache, Tensor& logits) const;
+  // void forward(const std::vector<int32_t>& input_ids, const std::vector<int64_t>& positions,
+  //              LlamaCache& cache, Tensor& logits) const;
+
+  // forward_prefill: void — alias for forward (phase-4 naming).
+  void forward_prefill(const std::vector<int32_t>& input_ids, const std::vector<int64_t>& positions,
+                       LlamaCache& cache, Tensor& logits) const;
+  // {
+  //   forward(input_ids, positions, cache, logits);
+  // }
+
+  // decode_step: void — one token at absolute position; logits [1, 1, vocab_size].
+  void decode_step(int32_t token_id, int64_t position, LlamaCache& cache, Tensor& logits) const;
 
   // config: const LlamaConfig& — model hyperparameters.
   const LlamaConfig& config() const { return config_; }

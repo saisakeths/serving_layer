@@ -38,7 +38,7 @@ static void BM_LlamaForward_1B(benchmark::State& state) {
   LlamaCache cache(cfg, 1, seq);
   Tensor logits({1, seq, cfg.vocab_size});
   for (auto _ : state) {
-    model.forward(ids, pos, cache, logits);
+    model.forward_prefill(ids, pos, cache, logits);
     benchmark::DoNotOptimize(logits.at({0, seq - 1, 0}));
   }
   state.SetItemsProcessed(state.iterations() * seq);

@@ -29,8 +29,8 @@ const Tensor& LlamaModel::head_weight() const {
   return weights_.lm_head;
 }
 
-// forward: void — prefill with KV cache; logits shape [1, seq, vocab_size].
-void LlamaModel::forward(const vector<int32_t>& input_ids, const vector<int64_t>& positions,
+// forward_prefill: void — prefill with KV cache; logits shape [1, seq, vocab_size].
+void LlamaModel::forward_prefill(const vector<int32_t>& input_ids, const vector<int64_t>& positions,
                          LlamaCache& cache, Tensor& logits) const {
   const int64_t seq = static_cast<int64_t>(input_ids.size());
   if (static_cast<int64_t>(positions.size()) != seq) {
@@ -77,6 +77,49 @@ void LlamaModel::forward(const vector<int32_t>& input_ids, const vector<int64_t>
     for (int64_t v = 0; v < vocab; ++v) {
       logits.at({0, s, v}) = logits_2d.at({s, v});
     }
+  }
+}
+
+// decode_step: void — one token at absolute position; logits [1, 1, vocab_size].
+void LlamaModel::decode_step(int32_t token_id, int64_t position, LlamaCache& cache,
+                             Tensor& logits) const {
+  if (position < 0 || position >= cache.max_seq()) {
+    throw invalid_argument("decode_step: position out of cache range");
+  }
+  const int64_t batch = 1;
+  const int64_t dim = config_.dim;
+  const int64_t vocab = config_.vocab_size;
+  if (logits.shape() != vector<int64_t>{batch, 1, vocab}) {
+    throw invalid_argument("decode_step: logits shape");
+  }
+
+  vector<int32_t> ids = {token_id};
+  Tensor embed_2d({1, dim});
+  embedding(weights_.tok_embeddings, ids, embed_2d);
+
+  Tensor hidden_a({batch, 1, dim});
+  Tensor hidden_b({batch, 1, dim});
+  for (int64_t d = 0; d < dim; ++d) {
+    hidden_a.at({0, 0, d}) = embed_2d.at({0, d});
+  }
+
+  Tensor* in = &hidden_a;
+  Tensor* out = &hidden_b;
+  for (size_t i = 0; i < blocks_.size(); ++i) {
+    blocks_[i].decode_step(*in, position, cache.layer(i), *out);
+    swap(in, out);
+  }
+  const Tensor& final_hidden = *in;
+
+  Tensor flat = final_hidden.reshape({batch, dim});
+  Tensor normed({batch, dim});
+  rmsnorm(flat, weights_.output_norm, config_.rms_eps, normed);
+
+  Tensor logits_2d({batch, vocab});
+  linear(normed, head_weight(), logits_2d);
+
+  for (int64_t v = 0; v < vocab; ++v) {
+    logits.at({0, 0, v}) = logits_2d.at({0, v});
   }
 }
 

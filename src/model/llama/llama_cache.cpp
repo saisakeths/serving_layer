@@ -43,4 +43,11 @@ int64_t LlamaCache::max_seq() const {
   return layers_.front().max_seq();
 }
 
+// reset: void — clears valid length on every layer cache.
+void LlamaCache::reset() {
+  for (KVCache& layer : layers_) {
+    layer.reset();
+  }
+}
+
 }  // namespace serving

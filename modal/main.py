@@ -1,4 +1,4 @@
-"""Run bench_forward (Llama 1B-shaped) on Modal and save results under benchmarks/results/."""
+"""Run bench_forward / bench_decode (Llama 1B-shaped) on Modal; save under benchmarks/results/."""
 
 from __future__ import annotations
 
@@ -15,8 +15,10 @@ APP_NAME = "serving-layer-bench-forward"
 REPO_ROOT = Path(__file__).resolve().parent.parent
 REPO_MOUNT = "/src"
 BUILD_DIR = f"{REPO_MOUNT}/build"
-BENCH_BIN = f"{BUILD_DIR}/benchmarks/bench_forward"
-DEFAULT_FILTER = "BM_LlamaForward_1B"
+BENCH_FORWARD_BIN = f"{BUILD_DIR}/benchmarks/bench_forward"
+BENCH_DECODE_BIN = f"{BUILD_DIR}/benchmarks/bench_decode"
+DEFAULT_FORWARD_FILTER = "BM_LlamaForward_1B"
+DEFAULT_DECODE_FILTER = "BM_LlamaDecode_1B"
 
 app = modal.App(APP_NAME)
 
@@ -81,9 +83,11 @@ def _collect_host_metadata() -> dict:
     }
 
 
-def _format_report(metadata: dict, build_log: str, bench_stdout: str, bench_stderr: str) -> str:
+def _format_report(
+    metadata: dict, build_log: str, bench_stdout: str, bench_stderr: str, bench_label: str
+) -> str:
     lines = [
-        "serving_layer bench_forward (Modal)",
+        f"serving_layer {bench_label} (Modal)",
         "=" * 60,
         f"timestamp_utc: {metadata['timestamp_utc']}",
         f"benchmark_filter: {metadata['benchmark_filter']}",
@@ -101,22 +105,15 @@ def _format_report(metadata: dict, build_log: str, bench_stdout: str, bench_stde
         "--- cmake build (stdout) ---",
         build_log.split("--- build ---", 1)[1].strip() if "--- build ---" in build_log else build_log.strip(),
         "",
-        "--- bench_forward stdout ---",
+        f"--- {bench_label} stdout ---",
         bench_stdout.strip(),
     ]
     if bench_stderr.strip():
-        lines.extend(["", "--- bench_forward stderr ---", bench_stderr.strip()])
+        lines.extend(["", f"--- {bench_label} stderr ---", bench_stderr.strip()])
     return "\n".join(lines) + "\n"
 
 
-@app.function(
-    image=image,
-    cpu=8,
-    memory=32768,
-    timeout=6 * 60 * 60,
-)
-def run_bench_forward(benchmark_filter: str = DEFAULT_FILTER) -> dict:
-    """Build serving_layer Release benchmarks and run bench_forward on Modal."""
+def _build_and_run_bench(bench_binary: str, benchmark_filter: str, bench_label: str) -> dict:
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     configure = _run(
@@ -141,7 +138,7 @@ def run_bench_forward(benchmark_filter: str = DEFAULT_FILTER) -> dict:
 
     bench = _run(
         [
-            BENCH_BIN,
+            bench_binary,
             f"--benchmark_filter={benchmark_filter}",
             "--benchmark_min_time=0.1s",
         ],
@@ -152,11 +149,12 @@ def run_bench_forward(benchmark_filter: str = DEFAULT_FILTER) -> dict:
     metadata = {
         "timestamp_utc": timestamp,
         "benchmark_filter": benchmark_filter,
-        "benchmark_binary": BENCH_BIN,
+        "benchmark_binary": bench_binary,
+        "benchmark_name": bench_label,
         "cmake_build_type": "Release",
         "host": host,
     }
-    report_text = _format_report(metadata, build_log, bench.stdout, bench.stderr)
+    report_text = _format_report(metadata, build_log, bench.stdout, bench.stderr, bench_label)
 
     return {
         "metadata": metadata,
@@ -165,15 +163,37 @@ def run_bench_forward(benchmark_filter: str = DEFAULT_FILTER) -> dict:
     }
 
 
-def _write_local_results(payload: dict) -> tuple[Path, Path]:
+@app.function(
+    image=image,
+    cpu=8,
+    memory=32768,
+    timeout=6 * 60 * 60,
+)
+def run_bench_forward(benchmark_filter: str = DEFAULT_FORWARD_FILTER) -> dict:
+    """Build serving_layer Release benchmarks and run bench_forward on Modal."""
+    return _build_and_run_bench(BENCH_FORWARD_BIN, benchmark_filter, "bench_forward")
+
+
+@app.function(
+    image=image,
+    cpu=8,
+    memory=32768,
+    timeout=6 * 60 * 60,
+)
+def run_bench_decode(benchmark_filter: str = DEFAULT_DECODE_FILTER) -> dict:
+    """Build serving_layer Release benchmarks and run bench_decode on Modal."""
+    return _build_and_run_bench(BENCH_DECODE_BIN, benchmark_filter, "bench_decode")
+
+
+def _write_local_results(payload: dict, result_prefix: str) -> tuple[Path, Path]:
     results_dir = REPO_ROOT / "benchmarks" / "results"
     results_dir.mkdir(parents=True, exist_ok=True)
 
     ts_slug = payload["metadata"]["timestamp_utc"].replace(":", "").replace("-", "")
-    txt_path = results_dir / f"bench_forward_1b_{ts_slug}.txt"
-    json_path = results_dir / f"bench_forward_1b_{ts_slug}.json"
-    latest_txt = results_dir / "bench_forward_1b.txt"
-    latest_json = results_dir / "bench_forward_1b.json"
+    txt_path = results_dir / f"{result_prefix}_{ts_slug}.txt"
+    json_path = results_dir / f"{result_prefix}_{ts_slug}.json"
+    latest_txt = results_dir / f"{result_prefix}.txt"
+    latest_json = results_dir / f"{result_prefix}.json"
 
     txt_path.write_text(payload["report_text"], encoding="utf-8")
     json_path.write_text(
@@ -193,15 +213,29 @@ def _write_local_results(payload: dict) -> tuple[Path, Path]:
 
 
 @app.local_entrypoint()
-def main(benchmark_filter: str = DEFAULT_FILTER) -> None:
-    """modal run modal/main.py [--benchmark-filter BM_LlamaForward_1B]"""
-    print(f"Running bench_forward on Modal (filter={benchmark_filter}) ...", flush=True)
-    payload = run_bench_forward.remote(benchmark_filter)
-    txt_path, json_path = _write_local_results(payload)
+def main(
+    bench: str = "forward",
+    benchmark_filter: str = "",
+) -> None:
+    """modal run modal/main.py [--bench forward|decode] [--benchmark-filter NAME]"""
+    if bench == "decode":
+        filt = benchmark_filter or DEFAULT_DECODE_FILTER
+        prefix = "bench_decode_1b"
+        print(f"Running bench_decode on Modal (filter={filt}) ...", flush=True)
+        payload = run_bench_decode.remote(filt)
+        latest_name = "bench_decode_1b.txt"
+    else:
+        filt = benchmark_filter or DEFAULT_FORWARD_FILTER
+        prefix = "bench_forward_1b"
+        print(f"Running bench_forward on Modal (filter={filt}) ...", flush=True)
+        payload = run_bench_forward.remote(filt)
+        latest_name = "bench_forward_1b.txt"
+
+    txt_path, json_path = _write_local_results(payload, prefix)
     print(payload["bench_stdout"])
     print(f"\nSaved report: {txt_path}", flush=True)
     print(f"Saved JSON:   {json_path}", flush=True)
-    print(f"Latest copy:  {REPO_ROOT / 'benchmarks' / 'results' / 'bench_forward_1b.txt'}", flush=True)
+    print(f"Latest copy:  {REPO_ROOT / 'benchmarks' / 'results' / latest_name}", flush=True)
 
 
 if __name__ == "__main__":

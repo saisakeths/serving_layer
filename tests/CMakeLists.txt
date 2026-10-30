@@ -19,6 +19,12 @@ target_link_libraries(test_kv_cache PRIVATE serving_core GTest::gtest_main)
 add_executable(test_llama_forward test_llama_forward.cpp)
 target_link_libraries(test_llama_forward PRIVATE serving_core GTest::gtest_main)
 
+add_executable(test_sampler test_sampler.cpp)
+target_link_libraries(test_sampler PRIVATE serving_core GTest::gtest_main)
+
+add_executable(test_generation test_generation.cpp)
+target_link_libraries(test_generation PRIVATE serving_core GTest::gtest_main)
+
 include(GoogleTest)
 gtest_discover_tests(test_tensor)
 gtest_discover_tests(test_tensor_index)
@@ -27,3 +33,5 @@ gtest_discover_tests(test_attention)
 gtest_discover_tests(test_one_block_forward)
 gtest_discover_tests(test_kv_cache)
 gtest_discover_tests(test_llama_forward)
+gtest_discover_tests(test_sampler)
+gtest_discover_tests(test_generation)
